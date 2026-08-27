@@ -2,185 +2,276 @@
 
 ### Autonomous Financial Reconciliation & Risk-Aware Control
 
-> **Raze reconciliation backlogs. Resolve financial discrepancies. Automate with evidence.**
+> **Raze reconciliation backlogs. Resolve financial discrepancies. Prove every decision.**
 
-RAZE is an agentic financial control system designed to reconcile heterogeneous payment and settlement records, investigate discrepancies, quantify decision confidence, and determine when financial operations can be safely automated or require human intervention.
+RAZE is an agentic financial reconciliation and control system designed to reconcile heterogeneous payment and settlement records, investigate discrepancies, quantify uncertainty, and determine when a financial operation can be safely automated or requires human intervention.
 
-The system combines:
-
-* Deterministic financial reconciliation
-* Machine-learning-based candidate matching
-* Agentic investigation
-* Structured evidence graphs
-* Confidence-aware decision policies
-* Human-in-the-loop feedback
-* Risk-sensitive reinforcement learning
-* Multi-currency and partial-settlement handling
-* Asynchronous execution
-* Production-oriented Go control infrastructure
-* Reproducible financial benchmarks
-* Stress and resilience testing
-
-RAZE is designed for the **Razorpay AI Finance Controller** track and operates using **Razorpay Test Mode and controlled synthetic financial data**.
+Built for the **Razorpay AI Finance Controller** track using **Razorpay Test Mode and controlled synthetic financial data**.
 
 ---
 
-# 1. Problem
+## Table of Contents
 
-Financial operations are distributed across payments, orders, settlements, fees, taxes, refunds, chargebacks, and merchant ledgers.
+* [Why RAZE](#why-raze)
+* [Core Principle](#core-principle)
+* [The Problem](#the-problem)
+* [What RAZE Does](#what-raze-does)
+* [Architecture](#architecture)
+* [Reconciliation Pipeline](#reconciliation-pipeline)
+* [Deterministic Financial Verification](#deterministic-financial-verification)
+* [Multi-Record Reconciliation](#multi-record-reconciliation)
+* [Agentic Investigation](#agentic-investigation)
+* [Evidence & Explainability](#evidence--explainability)
+* [Confidence-Aware Automation](#confidence-aware-automation)
+* [Human-in-the-Loop Learning](#human-in-the-loop-learning)
+* [Risk-Sensitive Policy Learning](#risk-sensitive-policy-learning)
+* [Product Experience](#product-experience)
+* [Benchmark & Evaluation](#benchmark--evaluation)
+* [System Reliability](#system-reliability)
+* [Technology Stack](#technology-stack)
+* [Repository Structure](#repository-structure)
+* [Security & Financial Controls](#security--financial-controls)
+* [Deployment](#deployment)
+* [Roadmap](#roadmap)
 
-Reconciliation therefore becomes a verification problem involving:
+---
 
-* Heterogeneous data sources
-* Missing records
-* Duplicate records
-* Amount discrepancies
-* Partial settlements
-* Batched settlements
+# Why RAZE?
+
+Financial operations rarely exist in one clean database.
+
+A real reconciliation workflow may involve:
+
+* Payments
+* Orders
+* Settlements
+* Processing fees
+* Taxes
 * Refunds
 * Chargebacks
-* Reference inconsistencies
-* Currency conversion differences
+* Merchant ledgers
+* Batched settlements
+* Partial settlements
+* Multiple currencies
+* Missing or duplicated records
 
-Traditional rule-based systems handle straightforward cases well but struggle with ambiguous cases.
+Traditional rule-based reconciliation works well when records are clean and relationships are obvious.
 
-Large language models can reason about ambiguity but should not be trusted as the authoritative source of financial truth.
+The problem begins when reality is ambiguous.
 
-RAZE combines both approaches.
+```text
+Payment A ──────┐
+Payment B ──────┼────── Settlement Batch
+Payment C ──────┘
 
-> **Deterministic systems establish financial correctness. AI investigates ambiguity. Humans retain control over uncertain cases.**
+        ↓
+
+Is this relationship correct?
+
+Are the fees explained?
+
+Are taxes correct?
+
+Is there a missing record?
+
+Should this be automatically reconciled?
+
+Or should a human intervene?
+```
+
+RAZE treats this as a **controlled decision system**, not simply a matching problem.
 
 ---
 
-# 2. Core Principle
-
-RAZE is designed around:
+# Core Principle
 
 > **Trustworthy autonomy over maximum automation.**
 
-The system separates the financial control layer from probabilistic intelligence.
+RAZE separates authoritative financial logic from probabilistic intelligence.
 
 ```text
-                     Financial Data
-                           │
-                           ▼
-                 Deterministic Validation
-                           │
-                           ▼
-                  Candidate Generation
-                           │
-                           ▼
-                   Evidence Retrieval
-                           │
-                           ▼
-                  Agentic Investigation
-                           │
-                           ▼
-                 Confidence Estimation
-                           │
-                           ▼
-                  Risk-Aware Policy
-                           │
-              ┌────────────┼────────────┐
-              ▼            ▼            ▼
-           MATCH        REVIEW       ESCALATE
-              │            │            │
-              └────────────┼────────────┘
-                           ▼
-                     Human Feedback
-                           │
-                           ▼
-                  Learning / Calibration
-                           │
-                           ▼
-                       Audit Trail
+                    Financial Data
+                         │
+                         ▼
+                Deterministic Validation
+                         │
+                         ▼
+                 Candidate Generation
+                         │
+                         ▼
+                 Evidence Retrieval
+                         │
+                         ▼
+                Agentic Investigation
+                         │
+                         ▼
+                Confidence Estimation
+                         │
+                         ▼
+                   Risk Policy
+                         │
+            ┌────────────┼────────────┐
+            ▼            ▼            ▼
+         MATCH         REVIEW      ESCALATE
+            │            │            │
+            └────────────┼────────────┘
+                         │
+                         ▼
+                  Human Feedback
+                         │
+                         ▼
+              Learning & Calibration
+                         │
+                         ▼
+                    Audit Trail
+```
+
+The fundamental rule is:
+
+> **Deterministic systems establish financial correctness. AI investigates ambiguity. Humans retain control over uncertainty.**
+
+---
+
+# The Problem
+
+Financial reconciliation is fundamentally a verification problem.
+
+RAZE handles situations including:
+
+| Problem              | Example                                     |
+| -------------------- | ------------------------------------------- |
+| Missing records      | Payment exists but settlement is missing    |
+| Duplicate records    | Same transaction appears multiple times     |
+| Amount mismatch      | ₹10,000 payment → ₹9,800 settlement         |
+| Partial settlement   | One payment settles across multiple records |
+| Batched settlement   | Multiple payments map to one settlement     |
+| Reference corruption | IDs differ slightly across systems          |
+| Refund               | Reconciled payment is partially refunded    |
+| Chargeback           | Transaction is adjusted after settlement    |
+| FX differences       | Authorization in USD, settlement in INR     |
+| Fee mismatch         | Unexpected processing fee                   |
+| Tax mismatch         | Incorrect tax calculation                   |
+
+The challenge is not simply:
+
+```text
+"Find the closest transaction."
+```
+
+It is:
+
+```text
+"Can we prove that these financial records represent
+the same underlying financial event?"
 ```
 
 ---
 
-# 3. Research Questions
+# What RAZE Does
 
-### RQ1 — Reconciliation
-
-Can layered deterministic, fuzzy, and agentic reconciliation improve matching performance across heterogeneous financial records?
-
-### RQ2 — Uncertainty
-
-Can confidence-aware abstention reduce false autonomous reconciliations?
-
-### RQ3 — Explainability
-
-Can structured evidence graphs provide auditable explanations for autonomous financial decisions?
-
-### RQ4 — Human Feedback
-
-Can human resolution data improve confidence calibration and decision-policy performance?
-
-### RQ5 — Risk-Sensitive Policy
-
-Can reinforcement learning improve the automation–risk trade-off compared with static confidence thresholds?
-
-### RQ6 — Scalability
-
-How does deterministic Go-based reconciliation throughput compare with the latency and throughput of the AI investigation pipeline?
-
----
-
-# 4. System Architecture
+RAZE combines multiple layers of intelligence.
 
 ```text
-                         ┌─────────────────────────┐
-                         │       Next.js UI        │
-                         │ Finance Operations      │
-                         └────────────┬────────────┘
-                                      │
-                              REST / WebSocket
-                                      │
-                         ┌────────────▼────────────┐
-                         │      Go Control Plane   │
-                         │                         │
-                         │ • API                    │
-                         │ • Workflow State         │
-                         │ • Financial Mutations    │
-                         │ • Authorization          │
-                         │ • Audit                  │
-                         │ • Concurrency Control   │
-                         │ • Circuit Breaker        │
-                         └───────┬──────────┬──────┘
-                                 │          │
-                              gRPC       PostgreSQL
-                                 │
-                         ┌───────▼────────────┐
-                         │ Python AI/ML Layer │
-                         │                    │
-                         │ • Matching         │
-                         │ • Retrieval        │
-                         │ • Agents           │
-                         │ • XAI              │
-                         │ • Confidence       │
-                         │ • RL               │
-                         │ • Evaluation       │
-                         └────────┬───────────┘
-                                  │
-                         ┌────────▼─────────┐
-                         │     pgvector     │
-                         └──────────────────┘
-
-               ┌────────────────────────────────────┐
-               │       Financial Data Sources       │
-               │                                    │
-               │ Razorpay Test Mode + Synthetic     │
-               │ Benchmark + Human Feedback         │
-               └────────────────────────────────────┘
+                     RAW RECORDS
+                          │
+                          ▼
+                  Normalization
+                          │
+                          ▼
+              Deterministic Validation
+                          │
+                          ▼
+               Candidate Generation
+                 │       │       │
+                 ▼       ▼       ▼
+               Exact    Fuzzy  Semantic
+                 │       │       │
+                 └───────┼───────┘
+                         ▼
+                  Candidate Ranking
+                         │
+                         ▼
+                Evidence Construction
+                         │
+                         ▼
+                Agent Investigation
+                         │
+                         ▼
+               Confidence Estimation
+                         │
+                         ▼
+                   Risk Policy
+                         │
+          ┌──────────────┼──────────────┐
+          ▼              ▼              ▼
+       MATCH          REVIEW         ESCALATE
 ```
 
 ---
 
-# 5. Architectural Boundaries
+# Architecture
+
+RAZE uses a deliberately separated architecture.
+
+```text
+┌──────────────────────────────────────────────┐
+│                                              │
+│            RAZE Operations Interface         │
+│                                              │
+│   Import → Reconcile → Investigate → Review  │
+│                                              │
+└──────────────────────┬───────────────────────┘
+                       │
+                 REST / WebSocket
+                       │
+                       ▼
+┌──────────────────────────────────────────────┐
+│                                              │
+│               Go Control Plane               │
+│                                              │
+│  • API                                       │
+│  • Workflow State                            │
+│  • Financial Mutations                       │
+│  • Authorization                             │
+│  • Audit                                     │
+│  • Idempotency                               │
+│  • Concurrency Control                       │
+│  • Circuit Breaker                           │
+│                                              │
+└───────────────┬──────────────────┬───────────┘
+                │                  │
+               gRPC           PostgreSQL
+                │                  │
+                ▼                  ▼
+┌──────────────────────────┐   ┌───────────────┐
+│     Python AI/ML Layer    │   │   pgvector    │
+│                          │   └───────────────┘
+│ • Matching               │
+│ • Retrieval              │
+│ • Agents                 │
+│ • Evidence               │
+│ • Confidence             │
+│ • Policy Learning        │
+│ • Evaluation             │
+│                          │
+└──────────────┬───────────┘
+               │
+               ▼
+┌──────────────────────────────────────────────┐
+│              Financial Data Sources          │
+│                                              │
+│  Razorpay Test Mode + Synthetic Benchmark    │
+│             + Human Feedback                 │
+└──────────────────────────────────────────────┘
+```
+
+---
+
+# Architectural Boundaries
 
 ## Go Control Plane
 
-Go is responsible for authoritative financial state.
+Go owns the **authoritative financial state**.
 
 Responsibilities:
 
@@ -189,82 +280,82 @@ Responsibilities:
 * Workflow orchestration
 * Database transactions
 * State transitions
-* Financial mutations
 * Authorization
+* Financial mutations
 * Audit logging
-* Concurrency control
 * Idempotency
+* Concurrency control
 * Async job submission
 * Circuit breaking
-* WebSocket event delivery
+* WebSocket events
+
+The control plane decides whether an action is legally allowed within the system.
+
+---
 
 ## Python AI/ML Layer
 
-Python is responsible for probabilistic and research components.
+Python owns probabilistic and research components.
 
 Responsibilities:
 
-* Candidate scoring
+* Candidate generation
 * Fuzzy matching
 * Semantic retrieval
 * Agentic investigation
-* Evidence generation
+* Evidence construction
 * Confidence estimation
-* RL inference
-* RL training
+* Policy inference
+* Offline policy training
 * Benchmark generation
 * Evaluation
 * Calibration
 
-The Python service cannot directly mutate authoritative financial state.
-
----
-
-# 6. Financial Reconciliation Pipeline
+### Important Boundary
 
 ```text
-                 Raw Financial Records
-                          │
-                          ▼
-                  Schema Normalization
-                          │
-                          ▼
-                 Deterministic Checks
-                          │
-                          ▼
-                  Candidate Generation
-                          │
-             ┌────────────┼────────────┐
-             ▼            ▼            ▼
-          Exact         Fuzzy       Semantic
-          Match         Match        Match
-             │            │            │
-             └────────────┼────────────┘
-                          ▼
-                   Candidate Ranking
-                          │
-                          ▼
-                  Evidence Verification
-                          │
-                          ▼
-                  Agent Investigation
-                          │
-                          ▼
-                  Confidence Estimation
-                          │
-                          ▼
-                   Decision Policy
-                          │
-             ┌────────────┼────────────┐
-             ▼            ▼            ▼
-           Match        Review       Escalate
+Python can recommend.
+
+Python cannot directly mutate
+authoritative financial state.
 ```
+
+All state-changing operations must pass through the Go control plane.
 
 ---
 
-# 7. Deterministic Financial Verification
+# Reconciliation Pipeline
 
-Core financial calculations are deterministic.
+## 1. Schema Normalization
+
+Different sources use different schemas.
+
+```text
+Payment Provider
+
+{
+  payment_id,
+  amount,
+  currency,
+  created_at
+}
+
+Settlement System
+
+{
+  settlement_id,
+  net_amount,
+  settlement_date
+}
+```
+
+RAZE normalizes these records into a canonical financial representation.
+
+---
+
+## 2. Deterministic Checks
+
+Financial calculations are performed deterministically.
 
 Example:
 
@@ -276,6 +367,7 @@ Tax                          ₹27
 Expected Settlement       ₹9,823
 
 Actual Settlement         ₹9,823
+────────────────────────────────
 Difference                    ₹0
 ```
 
@@ -285,27 +377,79 @@ Result:
 RECONCILED
 ```
 
-The system does not allow an LLM to override arithmetic inconsistencies.
+An LLM is never allowed to override arithmetic inconsistencies.
 
 ---
 
-# 8. Multi-Record Reconciliation
+## 3. Candidate Generation
 
-RAZE does not assume a simple 1-to-1 relationship.
-
-It supports:
+RAZE generates possible relationships using multiple strategies.
 
 ```text
-1 Payment → 1 Settlement
+                    Financial Record
+                          │
+            ┌─────────────┼─────────────┐
+            ▼             ▼             ▼
+          Exact         Fuzzy        Semantic
+            │             │             │
+            └─────────────┼─────────────┘
+                          ▼
+                    Candidates
+```
+
+Signals may include:
+
+* Exact transaction references
+* Amount similarity
+* Timestamp proximity
+* Merchant similarity
+* Currency compatibility
+* Settlement structure
+* Historical patterns
+
+---
+
+## 4. Evidence Verification
+
+Candidates are not trusted merely because they look similar.
+
+RAZE verifies:
+
+```text
+Reference Match?
+        │
+Amount Explained?
+        │
+Fees Explained?
+        │
+Taxes Explained?
+        │
+Settlement Structure Valid?
+        │
+Currency Conversion Valid?
+        │
+Missing Evidence?
+```
+
+The result becomes structured evidence.
+
+---
+
+# Multi-Record Reconciliation
+
+RAZE does not assume financial records have a simple 1:1 relationship.
+
+Supported relationships:
+
+```text
+1 Payment  → 1 Settlement
 
 N Payments → 1 Settlement
 
-1 Payment → N Settlement Components
+1 Payment  → N Settlement Components
 
 N Payments → N Settlement Components
 ```
-
-This is important for realistic settlement workflows.
 
 Example:
 
@@ -315,84 +459,105 @@ PAY_002   ₹8,000
 PAY_003   ₹7,000
              │
              ▼
-Settlement Batch
+      Settlement Batch
              │
-        Gross ₹20,000
-        Fee    ₹400
-        Tax     ₹72
+       Gross ₹20,000
+       Fee      ₹400
+       Tax       ₹72
              │
              ▼
-Net     ₹19,528
+        Net ₹19,528
 ```
 
-The reconciliation engine must determine whether the aggregate settlement can be explained by the underlying payment records.
+The engine determines whether the settlement can be fully explained by the underlying financial records.
 
 ---
 
-# 9. Edge-Case Engine
+# Edge Cases
 
-The synthetic benchmark explicitly generates difficult financial scenarios.
+RAZE explicitly models difficult financial scenarios.
 
-### Amount Errors
-
-```text
-₹10,000 → ₹9,800
-```
-
-### Missing Records
-
-Payment exists without settlement.
-
-### Duplicate Records
-
-The same payment appears multiple times.
-
-### Partial Settlements
+## Amount Errors
 
 ```text
-Payment = ₹20,000
-Settlement 1 = ₹12,000
-Settlement 2 = ₹8,000
+Expected: ₹10,000
+
+Actual:    ₹9,800
 ```
 
-### Batched Settlements
-
-Multiple payments contribute to one settlement.
-
-### Refunds
-
-A previously reconciled payment is partially refunded.
-
-### Chargebacks
-
-A settled transaction later produces a financial adjustment.
-
-### Multi-Currency
+## Missing Records
 
 ```text
-Authorization:
-USD
+Payment exists
 
-Settlement:
-INR
-
-FX Rate:
-time-dependent
+Settlement missing
 ```
 
-The benchmark tracks:
+## Duplicate Records
 
-* Original currency
-* Settlement currency
-* Exchange rate
-* Converted amount
-* FX difference
+```text
+PAY_1001
+PAY_1001
+```
+
+## Partial Settlement
+
+```text
+Payment      ₹20,000
+
+Settlement A ₹12,000
+Settlement B  ₹8,000
+```
+
+## Refunds
+
+```text
+Original Payment
+       ↓
+Reconciled
+       ↓
+Partial Refund
+       ↓
+Adjustment Event
+```
+
+## Multi-Currency
+
+```text
+Authorization
+
+USD 100
+
+FX Rate
+
+₹83.20
+
+Expected
+
+₹8,320
+
+Actual Settlement
+
+₹8,295
+
+Difference
+
+₹25
+```
+
+RAZE distinguishes between:
+
+* Expected FX variation
+* Settlement timing differences
+* Genuine reconciliation errors
 
 ---
 
-# 10. Agentic Investigation
+# Agentic Investigation
 
-RAZE uses specialized agents rather than an unrestricted autonomous agent.
+RAZE uses specialized bounded agents.
+
+It does **not** use an unrestricted autonomous agent.
 
 ```text
                     Controller
@@ -403,51 +568,41 @@ RAZE uses specialized agents rather than an unrestricted autonomous agent.
           │             │             │
           └─────────────┼─────────────┘
                         ▼
-                 Decision Policy
+                  Decision Policy
                         │
-              ┌─────────┴─────────┐
-              ▼                   ▼
-           Resolve             Escalate
+             ┌──────────┴──────────┐
+             ▼                     ▼
+          Resolve               Escalate
 ```
 
-### Controller
+## Matcher
 
-Coordinates the investigation.
+Finds plausible candidate records.
 
-### Matcher
+## Verifier
 
-Retrieves candidate financial records.
+Checks:
 
-### Verifier
+* Numerical consistency
+* Structural consistency
+* Financial relationships
+* Deterministic rules
 
-Checks numerical and structural consistency.
+## Investigator
 
-### Investigator
+Explores unresolved ambiguity using available evidence.
 
-Searches available evidence to explain discrepancies.
+## Controller
 
-### Decision Policy
-
-Selects:
-
-```text
-AUTO_RECONCILE
-REQUEST_REVIEW
-INVESTIGATE
-ESCALATE
-```
-
-The Go control plane authorizes any state-changing operation.
+Coordinates the investigation and enforces bounded execution.
 
 ---
 
-# 11. Explainable AI
+# Evidence & Explainability
 
-RAZE uses **structured evidence objects** rather than free-form explanations.
+RAZE does not rely on free-form explanations as the source of truth.
 
-Each investigation produces a typed decision object.
-
-Example:
+Every investigation produces a structured decision object.
 
 ```json
 {
@@ -466,27 +621,23 @@ Example:
       "breakdown": {
         "base": 12000,
         "fee": 200,
-        "gst": 36
+        "tax": 36
       },
       "unexplained_delta": 0,
       "weight": 0.5
-    },
-    {
-      "type": "HISTORICAL_MERCHANT_PATTERN",
-      "weight": 0.1
     }
   ],
   "abstention_reasons": []
 }
 ```
 
-The evidence object is machine-readable and directly rendered by the frontend.
+This allows the frontend and audit system to render evidence directly.
 
 ---
 
-# 12. Evidence Graph
+# Evidence Graph
 
-The evidence chain is represented as a directed graph.
+Evidence relationships are represented as a graph.
 
 ```text
 PAY_10023
@@ -495,33 +646,35 @@ PAY_10023
     ▼
 SETTLE_8801
     │
-    ├── FEE_RECORD
-    │       │
-    │       ▼
-    │     ₹200
+    ├──── FEE_RECORD
+    │         │
+    │         ▼
+    │       ₹200
     │
-    └── TAX_RECORD
-            │
-            ▼
-           ₹36
+    └──── TAX_RECORD
+              │
+              ▼
+             ₹36
 
-                ↓
+              ↓
 
-          Financial Match
+       FINANCIAL MATCH
 ```
 
-The graph allows operators to inspect:
+Operators can inspect:
 
-* Which records contributed to the decision
+* Which records contributed
 * Which relationships were exact
-* Which were inferred
+* Which relationships were inferred
 * Which calculations were deterministic
 * Which evidence was missing
-* Why the system abstained
+* Why automation was rejected
 
 ---
 
-# 13. Confidence-Aware Automation
+# Confidence-Aware Automation
+
+RAZE treats confidence as a decision signal, not a guarantee.
 
 Initial policy:
 
@@ -531,10 +684,12 @@ Confidence > 95%
         ▼
 AUTO-RECONCILE
 
+
 75% – 95%
         │
         ▼
 HUMAN REVIEW
+
 
 < 75%
         │
@@ -542,31 +697,43 @@ HUMAN REVIEW
 ESCALATE
 ```
 
-Confidence is not treated as a guarantee.
+Confidence must be calibrated.
 
-The system evaluates confidence calibration against held-out ground truth.
+For example:
 
-A confidence score of `0.90` should ideally correspond to approximately 90% correctness over comparable predictions.
+```text
+Predicted Confidence: 92%
+
+Observed Accuracy:    78%
+```
+
+This indicates overconfidence.
+
+RAZE continuously evaluates calibration against held-out ground truth.
 
 ---
 
-# 14. Human-in-the-Loop Learning
+# Human-in-the-Loop Learning
 
-Human review is an active learning signal rather than a dead-end workflow.
+Human review is not a dead end.
 
-When an operator resolves an exception, RAZE records the action.
+Every operator action becomes structured feedback.
 
 Examples:
 
 ```text
 ACCEPTED_AGENT_MATCH
+
 OVERRIDDEN_AGENT_MATCH
+
 MANUALLY_LINKED_RECORDS
+
 CONFIRMED_EXCEPTION
+
 REJECTED_CANDIDATE
 ```
 
-The feedback is stored as structured training data.
+Feedback pipeline:
 
 ```text
 Agent Recommendation
@@ -577,75 +744,18 @@ Human Decision
         ▼
 Feedback Event
         │
-        ├── Confidence Calibration
+        ├──────────────► Confidence Calibration
         │
-        └── Policy Training Data
+        └──────────────► Policy Training Dataset
 ```
+
+Human decisions are stored as learning signals.
+
+They do **not** immediately modify production behavior.
 
 ---
 
-# 15. Experience Replay
-
-Human decisions can be represented as experiences:
-
-```text
-(state, action, reward, outcome)
-```
-
-Example:
-
-```text
-State:
-confidence = 0.91
-amount_difference = 0
-reference_similarity = 0.98
-
-Agent Action:
-AUTO_RECONCILE
-
-Human:
-ACCEPT
-
-Outcome:
-Correct Match
-
-Reward:
-+10
-```
-
-An incorrect autonomous recommendation can produce:
-
-```text
-Agent Action:
-AUTO_RECONCILE
-
-Human:
-OVERRIDE
-
-Outcome:
-False Match
-
-Reward:
--50
-```
-
-These experiences are stored in a prioritized replay dataset.
-
-The system can prioritize:
-
-* Human overrides
-* High-value transactions
-* Low-confidence decisions
-* Rare exception types
-* Incorrect autonomous matches
-
----
-
-# 16. Offline Policy Improvement
-
-Human feedback is **not immediately used to mutate the production policy**.
-
-Instead:
+# Offline Policy Improvement
 
 ```text
 Human Feedback
@@ -672,34 +782,17 @@ Policy Version
 Controlled Deployment
 ```
 
-This prevents a single incorrect human action or noisy feedback event from immediately changing autonomous financial behavior.
+This prevents noisy feedback or a single incorrect decision from immediately changing autonomous financial behavior.
 
 ---
 
-# 17. Confidence Calibration
+# Risk-Sensitive Policy Learning
 
-Human feedback can also recalibrate the confidence estimator.
+The policy controls **intervention decisions**, not financial truth.
 
-Example:
+## State
 
-```text
-Predicted Confidence: 92%
-Observed Accuracy:    78%
-```
-
-The calibration layer identifies overconfidence.
-
-The system can then retrain or recalibrate the confidence model using accumulated human-reviewed cases.
-
-This addresses **confidence drift** as transaction patterns change.
-
----
-
-# 18. Risk-Sensitive Reinforcement Learning
-
-RL controls the intervention policy rather than financial truth.
-
-### State
+Example signals:
 
 ```text
 amount_difference
@@ -720,69 +813,40 @@ refund_status
 chargeback_status
 ```
 
-### Actions
+## Actions
 
 ```text
 AUTO_RECONCILE
+
 REQUEST_REVIEW
+
 INVESTIGATE
+
 ESCALATE
 ```
 
-### Reward
-
-Initial experimental reward:
+## Example Reward Design
 
 ```text
-Correct auto-reconciliation      +10
-Correct review                    +3
-Correct investigation             +3
-Correct escalation                +5
+Correct Auto-Reconciliation      +10
+Correct Review                    +3
+Correct Investigation             +3
+Correct Escalation                +5
 
-Incorrect auto-reconciliation    -50
+Incorrect Auto-Reconciliation    -50
 
-Unnecessary review                -2
-Unnecessary investigation         -1
-Unnecessary escalation            -3
+Unnecessary Review                -2
+Unnecessary Investigation         -1
+Unnecessary Escalation            -3
 ```
 
-The reward function is configurable and evaluated under different financial risk assumptions.
+The heavy penalty for incorrect autonomous reconciliation reflects asymmetric financial risk.
 
 ---
 
-# 19. RL Environment
+# Policy Baselines
 
-The policy is trained entirely against synthetic environments with known ground truth.
-
-```text
-                  Environment
-                       │
-                       ▼
-                     State
-                       │
-                       ▼
-                   RL Policy
-                       │
-                       ▼
-                     Action
-                       │
-                       ▼
-                  Ground Truth
-                       │
-                       ▼
-                    Reward
-                       │
-                       ▼
-                  Next State
-```
-
-No RL training occurs against live financial transactions.
-
----
-
-# 20. RL Baselines
-
-RAZE evaluates whether RL is actually necessary.
+RAZE evaluates whether complex learning is actually necessary.
 
 ```text
 Static Threshold
@@ -794,27 +858,212 @@ Supervised Policy
 Contextual Bandit
        │
        ▼
-PPO
+Adaptive RL Policy
 ```
 
-The goal is to determine whether adaptive policies provide a measurable improvement over simpler approaches.
+The objective is not to claim that RL is automatically superior.
+
+The objective is to measure whether adaptive policies improve the automation-risk trade-off.
 
 ---
 
-# 21. Benchmark Design
+# Product Experience
 
-The benchmark contains clean and corrupted financial records.
+## Not Another Dashboard
 
-Example distribution:
+RAZE is intentionally designed as a **workflow-first financial operations application**.
+
+The product is not centered around:
+
+* KPI cards
+* Generic charts
+* Analytics dashboards
+* Decorative metrics
+
+Instead, the interface follows the actual reconciliation workflow.
 
 ```text
-10,000 Records
+Import Records
+      │
+      ▼
+Run Reconciliation
+      │
+      ▼
+Review Results
+      │
+      ▼
+Investigate Exceptions
+      │
+      ▼
+Inspect Evidence
+      │
+      ▼
+Approve / Reject / Escalate
+      │
+      ▼
+Audit Record
+```
+
+---
+
+## Core Screens
+
+### 1. Reconciliation Jobs
+
+The entry point for reconciliation.
+
+Operators can:
+
+* Import financial records
+* Select reconciliation sources
+* Start a reconciliation run
+* Track processing state
+* View completed runs
+
+Example:
+
+```text
+RECONCILIATION JOB #REC-1042
+
+Status: INVESTIGATING
+
+Records: 12,481
+
+Matched: 11,902
+
+Review Required: 421
+
+Escalated: 158
+```
+
+---
+
+### 2. Reconciliation Results
+
+Displays the actual output of a reconciliation run.
+
+```text
+┌──────────────────────────────────────────────┐
+│ PAYMENT          SETTLEMENT       STATUS     │
+├──────────────────────────────────────────────┤
+│ PAY_1023         SET_8821         MATCHED    │
+│ PAY_1024         SET_8822         REVIEW     │
+│ PAY_1025         —                ESCALATED  │
+└──────────────────────────────────────────────┘
+```
+
+Operators can drill directly into individual cases.
+
+---
+
+### 3. Investigation Workspace
+
+This is the core product experience.
+
+```text
+┌─────────────────────────────────────────────┐
+│ REC_9021                                   │
+│                                             │
+│ Status: REVIEW REQUIRED                     │
+│ Confidence: 92%                             │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Candidate Records                           │
+│                                             │
+│ PAY_10023     Similarity: 98%              │
+│ PAY_10027     Similarity: 74%              │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Evidence                                   │
+│                                             │
+│ ✓ Exact reference match                    │
+│ ✓ Amount explained                         │
+│ ✓ Fee breakdown verified                   │
+│ ✓ Tax calculation verified                 │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│ Recommendation                             │
+│                                             │
+│ REQUEST_REVIEW                              │
+│                                             │
+│ [Approve] [Reject] [Investigate] [Escalate] │
+└─────────────────────────────────────────────┘
+```
+
+The operator sees the actual evidence behind the recommendation.
+
+---
+
+### 4. Human Review
+
+Operators can:
+
+* Accept recommendation
+* Reject recommendation
+* Manually link records
+* Request additional investigation
+* Escalate exceptions
+
+Every action generates a structured feedback event.
+
+---
+
+### 5. Transaction Audit
+
+Each reconciliation has a complete history.
+
+```text
+REC_9021
+
+10:02  CREATED
+
+10:03  MATCHING
+
+10:03  CANDIDATES GENERATED
+
+10:04  EVIDENCE VERIFIED
+
+10:05  AGENT INVESTIGATION
+
+10:06  REQUEST_REVIEW
+
+10:10  HUMAN ACCEPTED
+
+10:10  RESOLVED
+```
+
+The audit record stores:
+
+* Decision
+* Evidence
+* Agent version
+* Model version
+* Policy version
+* Previous state
+* New state
+* Human actions
+* Timestamp
+
+---
+
+# Benchmark & Evaluation
+
+RAZE uses controlled synthetic financial data with known ground truth.
+
+Example benchmark:
+
+```text
+10,000 Financial Records
 
 8,000 Normal
+
 2,000 Corrupted
 ```
 
-Corruption classes include:
+Corruption classes:
 
 ```text
 Amount mismatch
@@ -833,26 +1082,24 @@ Tax discrepancy
 N-to-1 mapping
 ```
 
-The benchmark maintains ground-truth relationships for objective evaluation.
-
 ---
 
-# 22. Evaluation Metrics
+# Evaluation Metrics
 
-### Reconciliation Quality
+## Reconciliation Quality
 
 * Precision
 * Recall
 * F1
 * Match accuracy
 
-### Financial Safety
+## Financial Safety
 
 * False Auto-Match Rate
 * Incorrect Autonomous Action Rate
 * High-value error rate
 
-### Operational Efficiency
+## Operational Efficiency
 
 * Automation Rate
 * Human Review Rate
@@ -861,20 +1108,20 @@ The benchmark maintains ground-truth relationships for objective evaluation.
 * Latency
 * Cost per record
 
-### AI Reliability
+## AI Reliability
 
-* Confidence Calibration
-* Abstention Quality
-* Evidence Coverage
-* Agent Failure Rate
+* Confidence calibration
+* Abstention quality
+* Evidence coverage
+* Agent failure rate
 
 ---
 
-# 23. Stress Testing
+# Stress Testing
 
-The Go control plane is benchmarked independently from the AI pipeline.
+The deterministic engine and AI pipeline are benchmarked independently.
 
-### Deterministic Engine
+## Deterministic Engine
 
 Measure:
 
@@ -888,54 +1135,28 @@ CPU utilization
 Memory utilization
 ```
 
-### AI Pipeline
+## AI Investigation Pipeline
 
 Measure:
 
 ```text
-Agent investigations / second
-Average investigation latency
-p95 investigation latency
+Investigations / second
+Average latency
+p95 latency
 LLM calls / investigation
 Inference cost
 Failure rate
 ```
 
-The goal is not to claim arbitrary throughput figures but to publish measurements from the deployed implementation.
+RAZE publishes measured results rather than arbitrary performance claims.
 
 ---
 
-# 24. Circuit Breaker
+# Asynchronous Execution
 
-RAZZOR treats the AI service as a dependency that can fail or become slow.
+Agent investigations may take longer than deterministic checks.
 
-If the Python service exceeds configured latency or error thresholds:
-
-```text
-Python AI Service
-       │
-       │ Timeout / Failure
-       ▼
-Go Circuit Breaker
-       │
-       ▼
-Fallback Policy
-       │
-       ▼
-HUMAN_REVIEW
-```
-
-The financial workflow remains available even if the AI service becomes unavailable.
-
-The system fails **closed**, not open.
-
-An unavailable AI model must not cause uncontrolled financial automation.
-
----
-
-# 25. Asynchronous Agent Execution
-
-Long-running investigations are processed asynchronously.
+Therefore, long-running workflows are asynchronous.
 
 ```text
 Transaction
@@ -962,10 +1183,10 @@ Go Control Plane
 PostgreSQL
      │
      ▼
-WebSocket
+WebSocket Event
      │
      ▼
-Next.js
+Operations Interface
 ```
 
 Workflow states:
@@ -980,21 +1201,47 @@ VERIFYING
 INVESTIGATING
    ↓
 RESOLVED
+```
 
-or
+Or:
 
+```text
 INVESTIGATING
-   ↓
+      ↓
 ESCALATED
 ```
 
 ---
 
-# 26. Concurrency Control
+# Circuit Breaker
 
-Financial state is managed transactionally in PostgreSQL.
+The AI system is treated as an external dependency that can fail.
 
-RAZZOR uses:
+```text
+Python AI Service
+       │
+       │ Timeout / Failure
+       ▼
+Go Circuit Breaker
+       │
+       ▼
+Fallback Policy
+       │
+       ▼
+HUMAN REVIEW
+```
+
+RAZE fails **closed**, not open.
+
+An unavailable AI model must never result in uncontrolled financial automation.
+
+---
+
+# Concurrency Control
+
+Financial state is managed transactionally.
+
+RAZE uses:
 
 * PostgreSQL transactions
 * Optimistic locking
@@ -1007,104 +1254,20 @@ Example:
 ```text
 Transaction Version = 7
 
-Worker A → reads 7
-Worker B → reads 7
+Worker A → reads version 7
+Worker B → reads version 7
 
-Worker A → commits 8
+Worker A → commits version 8
 
-Worker B → detects stale version
-         → rejects / retries
+Worker B → stale version detected
+         → retry / reject
 ```
 
-This prevents concurrent agents or human operators from applying conflicting financial state transitions.
+This prevents conflicting state changes from agents or human operators.
 
 ---
 
-# 27. Multi-Currency Reconciliation
-
-Currency-aware reconciliation tracks:
-
-```text
-source_currency
-settlement_currency
-source_amount
-settlement_amount
-exchange_rate
-conversion_timestamp
-fx_difference
-```
-
-Example:
-
-```text
-Authorization
-USD 100
-
-FX Rate
-₹83.20
-
-Expected INR
-₹8,320
-
-Settlement
-₹8,295
-
-FX / Settlement Difference
-₹25
-```
-
-The system distinguishes between:
-
-* Genuine reconciliation errors
-* Expected currency conversion differences
-* Unexplained FX discrepancies
-
----
-
-# 28. Refunds & Chargebacks
-
-Financial state is not assumed to be immutable after initial reconciliation.
-
-Example:
-
-```text
-Day 1
-
-Payment
-₹10,000
-
-Settlement
-₹9,823
-
-→ RECONCILED
-```
-
-Later:
-
-```text
-Day 3
-
-Partial Refund
-₹3,000
-```
-
-RAZZOR creates a new adjustment event rather than silently rewriting the historical reconciliation.
-
-```text
-Original Reconciliation
-        │
-        ▼
-Adjustment Event
-        │
-        ▼
-Updated Financial Position
-```
-
-This maintains historical auditability.
-
----
-
-# 29. Audit Trail
+# Audit Trail
 
 Every financial decision records:
 
@@ -1143,49 +1306,47 @@ risk-policy-v3
 Model:
 investigator-v2
 
-Evidence:
-5 records
-
 State:
 INVESTIGATING → REVIEW
 ```
 
-This enables reproducibility and post-decision analysis.
-
 ---
 
-# 30. Technology Stack
+# Technology Stack
 
 | Layer               | Technology               |
 | ------------------- | ------------------------ |
 | Frontend            | Next.js                  |
 | Language            | TypeScript               |
 | UI                  | Tailwind CSS + shadcn/ui |
-| Charts              | Recharts                 |
 | Backend             | Go                       |
-| Go HTTP             | Chi / Gin                |
+| HTTP                | Chi / Gin                |
 | Internal RPC        | gRPC + Protocol Buffers  |
 | Async Processing    | Redis + Asynq            |
 | Database            | PostgreSQL               |
 | Vector Search       | pgvector                 |
 | AI Service          | Python + FastAPI         |
 | Agent Orchestration | LangGraph                |
-| ML                  | scikit-learn             |
+| Machine Learning    | scikit-learn             |
 | Deep Learning       | PyTorch                  |
-| RL                  | Stable-Baselines3        |
-| Matching            | RapidFuzz                |
+| Policy Learning     | Stable-Baselines3        |
+| Fuzzy Matching      | RapidFuzz                |
 | Embeddings          | Sentence Transformers    |
 | Containerization    | Docker                   |
 
 ---
 
-# 31. Repository Structure
+# Repository Structure
 
 ```text
 raze/
 │
 ├── frontend/
 │   ├── app/
+│   │   ├── jobs/
+│   │   ├── reconciliation/
+│   │   ├── investigation/
+│   │   └── review/
 │   ├── components/
 │   ├── lib/
 │   └── public/
@@ -1228,7 +1389,7 @@ raze/
 │   │   ├── replay.py
 │   │   └── calibration.py
 │   │
-│   ├── rl/
+│   ├── policy/
 │   │   ├── environment.py
 │   │   ├── policy.py
 │   │   ├── train.py
@@ -1249,7 +1410,7 @@ raze/
 │
 ├── experiments/
 │   ├── baselines/
-│   ├── rl/
+│   ├── policy/
 │   ├── calibration/
 │   └── results/
 │
@@ -1266,168 +1427,145 @@ raze/
 │   └── evaluation/
 │
 ├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
 ---
 
-# 32. Security & Financial Controls
+# Security & Financial Controls
 
-RAZE follows strict autonomy boundaries.
+RAZE enforces strict autonomy boundaries.
 
-### Deterministic Financial Logic
+## Deterministic Financial Logic
 
-Financial arithmetic and critical validation are deterministic.
+Financial arithmetic and critical validation remain deterministic.
 
-### Evidence Requirement
+## Evidence Requirement
 
 Autonomous recommendations require supporting evidence.
 
-### Bounded Agent Actions
+## Bounded Agent Actions
 
-Agents cannot arbitrarily mutate authoritative financial records.
+Agents cannot directly mutate financial records.
 
-### Confidence Gating
+## Confidence Gating
 
-Low-confidence cases are routed to review or escalation.
+Low-confidence decisions are routed to review or escalation.
 
-### Human Control
+## Human Control
 
-Operators can approve, reject, or override recommendations.
+Operators can approve, reject, override, or manually resolve recommendations.
 
-### Idempotency
+## Idempotency
 
 Repeated requests cannot silently create duplicate financial operations.
 
-### Circuit Breaking
+## Circuit Breaking
 
-AI failures fall back to human review.
+AI failures fall back to safe human review.
 
-### Auditability
+## Auditability
 
-All state-changing operations are recorded.
+Every state-changing operation is recorded.
 
-### Test-Mode Operation
+## Test-Mode Operation
 
-The buildathon implementation uses Razorpay Test Mode and synthetic data rather than production financial transactions.
+The buildathon implementation uses:
 
----
+* Razorpay Test Mode
+* Controlled synthetic financial data
 
-# 33. Product Interface
-
-RAZE provides a financial operations console rather than a chatbot.
-
-### Control Center
-
-Displays:
-
-* Reconciliation volume
-* Amount reconciled
-* Exceptions
-* Automation rate
-* Precision
-* False-match rate
-* Human review load
-
-### Reconciliation
-
-Provides:
-
-* Transaction matching
-* Candidate records
-* Financial calculations
-* Confidence
-* Evidence
-
-### Investigation
-
-Provides:
-
-* Agent status
-* Evidence graph
-* Discrepancy analysis
-* Recommendation
-* Human controls
-
-### Exceptions
-
-Provides:
-
-* Escalation queue
-* Severity
-* Exception category
-* Evidence
-* Resolution status
-
-### Evaluation Lab
-
-Provides:
-
-* Benchmark results
-* Baseline comparisons
-* RL results
-* Calibration
-* Ablation studies
-* Stress-test results
-
-### Audit Trail
-
-Provides:
-
-* Decision history
-* Evidence
-* Agent/model versions
-* Policy versions
-* State transitions
+No production financial transactions are required.
 
 ---
 
-# 34. End-to-End Decision Flow
+# End-to-End Decision Flow
 
 ```text
-                 Transaction
-                      │
-                      ▼
+                Transaction
+                     │
+                     ▼
               Data Normalization
-                      │
-                      ▼
-             Deterministic Checks
-                      │
-                      ▼
-              Candidate Retrieval
-                      │
-                      ▼
-              Evidence Construction
-                      │
-                      ▼
-             Agentic Investigation
-                      │
-                      ▼
-             Confidence Estimation
-                      │
-                      ▼
-               Risk Policy
-                      │
-          ┌───────────┼───────────┐
-          ▼           ▼           ▼
-       MATCH        REVIEW     ESCALATE
-          │           │           │
-          └───────────┼───────────┘
-                      ▼
-                 Human Feedback
-                      │
-                      ▼
-            Experience / Calibration
-                      │
-                      ▼
-                  Audit Trail
+                     │
+                     ▼
+            Deterministic Checks
+                     │
+                     ▼
+             Candidate Retrieval
+                     │
+                     ▼
+            Evidence Construction
+                     │
+                     ▼
+            Agentic Investigation
+                     │
+                     ▼
+           Confidence Estimation
+                     │
+                     ▼
+                Risk Policy
+                     │
+         ┌───────────┼───────────┐
+         ▼           ▼           ▼
+       MATCH       REVIEW     ESCALATE
+         │           │           │
+         └───────────┼───────────┘
+                     ▼
+               Human Feedback
+                     │
+                     ▼
+          Experience & Calibration
+                     │
+                     ▼
+                Audit Trail
 ```
 
 ---
 
-# 35. Design Philosophy
+# Deployment
 
-RAZE treats financial autonomy as a controlled systems problem.
+The system is designed to run as independent services.
+
+```text
+                    Internet
+                       │
+                       ▼
+                Next.js Frontend
+                       │
+                       ▼
+                  Go API Service
+                  │           │
+                  ▼           ▼
+             PostgreSQL      Redis
+                  │           │
+                  │           ▼
+                  │       Asynq Worker
+                  │           │
+                  ▼           ▼
+               pgvector   Python AI Service
+```
+
+Services are containerized using Docker.
+
+Example:
+
+```bash
+git clone https://github.com/aksayush2005/raze.git
+
+cd raze
+
+cp .env.example .env
+
+docker compose up --build
+```
+
+---
+
+
+# Design Philosophy
+
+RAZE treats financial autonomy as a **controlled systems problem**.
 
 **Deterministic systems establish truth.**
 
@@ -1435,18 +1573,41 @@ RAZE treats financial autonomy as a controlled systems problem.
 
 **Agents investigate ambiguity.**
 
-**Evidence graphs make decisions auditable.**
+**Evidence makes decisions auditable.**
 
 **Confidence controls autonomy.**
 
-**Human decisions provide learning signals.**
+**Humans resolve uncertainty.**
 
-**Risk-sensitive policies optimize intervention.**
+**Feedback improves future decisions.**
+
+**Adaptive policies optimize intervention.**
 
 **Go protects the financial control plane.**
 
-**Python provides the intelligence layer.**
+**Python provides probabilistic intelligence.**
 
 **The system fails closed when AI becomes unavailable.**
 
+---
+
+# About
+
+RAZE is an agentic financial reconciliation system combining:
+
+* Deterministic financial controls
+* Evidence-grounded AI investigation
+* Confidence-aware automation
+* Human-in-the-loop decision making
+* Risk-sensitive policy learning
+* Multi-record reconciliation
+* Auditability
+* Production-oriented distributed systems
+
 > **Raze the backlog. Resolve the discrepancy. Prove the decision.**
+
+---
+
+## License
+
+Apache-2.0
