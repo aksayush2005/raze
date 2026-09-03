@@ -34,7 +34,7 @@ data/benchmark/*
 !data/processed/.gitkeep
 !data/benchmark/.gitkeep
 
-# Claude Code local settings
+# Claude Code local settings (per-user permission grants; not project source)
 .claude/
 
 # Misc

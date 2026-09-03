@@ -1,0 +1,6 @@
+# Pins must carry cp314 wheels: pydantic<=2.10 pulls pydantic-core 2.27.x which
+# has no Python 3.14 wheel and tries to build from Rust source. Bumped for 3.14.
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+pydantic==2.13.5
+google-genai==2.22.0

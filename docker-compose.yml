@@ -1,0 +1,49 @@
+# RAZE demo stack.
+# Razorpay runs in TEST MODE only; when credentials are absent the system
+# falls back to synthetic settlement data. No production money flows here.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-raze}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-raze_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-raze}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-raze} -d ${POSTGRES_DB:-raze}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-raze}:${POSTGRES_PASSWORD:-raze_dev_password}@postgres:5432/${POSTGRES_DB:-raze}?sslmode=disable
+      API_PORT: 8080
+      AI_SERVICE_URL: http://ai:8090
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      RAZORPAY_MODE: test
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ai:
+    build:
+      context: .
+      dockerfile: ai/Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      AI_PORT: 8090
+
+volumes:
+  pgdata:
