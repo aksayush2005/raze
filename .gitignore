@@ -1,0 +1,44 @@
+# Environment
+.env
+*.env.local
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+coverage.*
+services/api/vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+ai/**/__pycache__/
+ai/.venv/
+
+# Node / Next.js
+node_modules/
+frontend/.next/
+frontend/out/
+frontend/dist/
+
+# Data artifacts
+data/raw/*
+data/processed/*
+data/benchmark/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/benchmark/.gitkeep
+
+# Claude Code local settings
+.claude/
+
+# Misc
+*.log
+.DS_Store
+.dockerignore
+AGENTS.md
