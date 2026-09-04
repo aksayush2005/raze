@@ -12,6 +12,7 @@ Built for the **Razorpay AI Finance Controller** track using **Razorpay Test Mod
 
 ## Table of Contents
 
+* [How to Run](#how-to-run)
 * [Why RAZE](#why-raze)
 * [Core Principle](#core-principle)
 * [The Problem](#the-problem)
@@ -33,6 +34,86 @@ Built for the **Razorpay AI Finance Controller** track using **Razorpay Test Mod
 * [Security & Financial Controls](#security--financial-controls)
 * [Deployment](#deployment)
 * [Roadmap](#roadmap)
+
+---
+
+# How to Run
+
+RAZE runs as three local pieces: a **PostgreSQL** container, the **Go control plane** (`:8080`), and an optional **Python AI service** (`:8090`). Two launcher scripts below manage the whole stack — including first-time setup — so a typical first run is a single command.
+
+## Prerequisites
+
+| Tool | Needed for | Notes |
+| ---- | ---------- | ----- |
+| Docker (compose) | PostgreSQL | `docker compose`, or podman with the compose plugin |
+| Go ≥ 1.23 | control plane + TUI | stdlib-only; no external Go dependencies |
+| Python ≥ 3.14 | AI service *(optional)* | venv + deps auto-created on first run (needs network) |
+| `make` | convenience | wraps the launchers |
+
+No `.env` is required to run. Without one RAZE uses local defaults, the deterministic `heuristic-v1` investigator, and synthetic settlement data. Copy `.env.example` to `.env` only to opt into the optional Gemini / Razorpay features below.
+
+## Run the terminal UI (recommended)
+
+```bash
+make tui        # or: bash scripts/tui.sh
+```
+
+`scripts/tui.sh` does everything in order:
+
+1. starts PostgreSQL (`docker compose up -d postgres`) and waits for it to be ready;
+2. applies migrations (`go run ./cmd/migrate`);
+3. generates the synthetic benchmark when it is missing — 150 settlements, 30 % corruption, seed 42 — writing `data/benchmark/records.json` + `ground_truth.json`;
+4. starts the Python AI service in an auto-created `ai/.venv` (degrades gracefully to deterministic-only when Python, dependencies or network are unavailable);
+5. builds and starts the Go API on `http://localhost:8080`;
+6. when the control plane is empty, imports the records and runs a first reconciliation automatically;
+7. launches the interactive **raze-tui**.
+
+Inside the TUI: select a job, open its items, then open an item to inspect the record, its matched record, candidates, evidence, audit trail and the AI investigation (the `model=…` label shows which investigator advised it). The active keys are always shown in the footer; `q` quits and stops the services the script started.
+
+## Run the headless demo
+
+```bash
+bash scripts/demo.sh
+```
+
+The same bootstrap without the TUI: prints each step, imports records, runs a reconciliation job, waits for completion, then prints the final job JSON — including its `matched` / `review` / `escalated` counts — and the review-endpoint hints. This is the path to capture for a terminal recording.
+
+## Run the pieces individually
+
+```bash
+docker compose up -d postgres     # 1. PostgreSQL
+make migrate                      # 2. apply migrations
+python3 data/generator/generate.py --n-settlements 150 --corruption-rate 0.30 --seed 42   # 3. benchmark data
+make api-run                      # 4. Go control plane  -> http://localhost:8080
+make ai-run                       # 5. Python AI service -> http://localhost:8090  (optional)
+make test                         # 6. go test ./...
+```
+
+Useful API endpoints once the API is up: `GET /healthz`, `POST /api/v1/records/import`, `POST /api/v1/records/sync/razorpay`, `GET /api/v1/jobs`, `GET /api/v1/jobs/{id}`, `GET /api/v1/jobs/{id}/items`, `GET /api/v1/items/{id}` (record + match + candidates + evidence + audit + AI advice), and `POST /api/v1/items/{id}/review`.
+
+## Optional: Gemini advisory AI
+
+Set in `.env` (or your shell) to add an LLM-backed second opinion on every REVIEW / ESCALATE case:
+
+| Variable | Default | Behaviour |
+| -------- | ------- | --------- |
+| `GEMINI_API_KEY` | *(unset)* | absent → deterministic investigator only |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | model id (Google retired `gemini-2.5-flash` for new keys) |
+| `RAZE_AI_BACKEND` | `auto` | `auto` = Gemini, silent fallback to heuristic on any error; `gemini` = required (fails closed); `heuristic` = always deterministic |
+
+## Optional: Razorpay TEST-mode sync
+
+Set `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` with **test-mode keys only** and keep `RAZORPAY_MODE=test`. When credentials are absent, RAZE runs entirely on synthetic settlement data.
+
+## Reset to a clean state
+
+The launchers reuse existing data once the control plane is non-empty, so a genuinely fresh run needs both:
+
+```bash
+docker compose down -v            # drop the dev Postgres volume
+rm -f data/benchmark/records.json data/benchmark/ground_truth.json   # force data regeneration
+make tui                          # or: bash scripts/tui.sh
+```
 
 ---
 
@@ -1546,19 +1627,7 @@ The system is designed to run as independent services.
                pgvector   Python AI Service
 ```
 
-Services are containerized using Docker.
-
-Example:
-
-```bash
-git clone https://github.com/aksayush2005/raze.git
-
-cd raze
-
-cp .env.example .env
-
-docker compose up --build
-```
+Services are containerized using Docker. A containerized stack is available via `docker compose up --build` (PostgreSQL, Go API, Python AI), but the containerized API does not seed benchmark data or drive the interactive session — for a complete, self-contained run use the launchers described in [How to Run](#how-to-run).
 
 ---
 
